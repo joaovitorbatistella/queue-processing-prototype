@@ -3,15 +3,15 @@
 namespace Service;
 
 use InvalidArgumentException;
+use Session\Login;
 use Model\User;
-use Model\AuthorizationToken;
 use Infra\GenericConsts;
 
 class handleUser
 {
     public const TABLE = 'users';
-    public const GET_RESOURCES = ['list', 'filterByName'];
-    public const POST_RESOURCES = ['store'];
+    public const GET_RESOURCES = ['list', 'login', 'logout'];
+    public const POST_RESOURCES = ['store', 'login'];
     public const LOGIN_RESOURCES = ['login'];
     public const LOGOUT_RESOURCES = ['logout'];
     public const DELETE_RESOURCES = ['delete'];
@@ -23,7 +23,6 @@ class handleUser
      * @var object|User
      */
     private object $User;
-    private object $AuthorizationToken;
 
     /**
      * handleUser constructor.
@@ -33,7 +32,6 @@ class handleUser
     {
         $this->data = $data;
         $this->User = new User();
-        $this->AuthorizationToken = new AuthorizationToken();
     }
 
     /**
@@ -92,10 +90,6 @@ class handleUser
             }
         } else {
             throw new InvalidArgumentException(GenericConsts::MSG_ERRO_RECURSO_INEXISTENTE);
-        }
-
-        if ($return === null) {
-            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_GENERICO);
         }
 
         return $return;
@@ -183,17 +177,31 @@ class handleUser
      */
     private function login()
     {
-        [$username, $password] = [$this->bodyDataRequests['username'], $this->bodyDataRequests['password']];
-
-        if ($username && $password) {
-            if ($this->User->handleLogin($username, $password) > 0) {
-                $token = $this->AuthorizationToken->generateToken($username, $password);
-                return ['token' => $token];
+        if($this->data['method'] === 'GET') {
+            Login::requiredLogout();
+            if(isset($_COOKIE['logged'])) {
+                $data = json_decode($_COOKIE['logged']);
+                Login::login((object) $data);
+                header('location: '.APP_URL.'/');
+            } else {
+                include dirname(__DIR__).'/resources/views/user/login.php';
             }
+        } else {
+            [$email, $password] = [$this->bodyDataRequests['inputEmail'], $this->bodyDataRequests['inputPassword']];
 
-            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_GENERICO);
+            if ($email && $password) {
+                if ($this->User->handleLogin($email, $password) > 0) {
+                    header('location: '.APP_URL.'/');
+                    exit;
+                } else {
+                    header('location: '.APP_URL.'/user/login');
+                    exit;
+                }
+    
+                throw new InvalidArgumentException(GenericConsts::MSG_ERRO_GENERICO);
+            }
+            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_LOGIN_SENHA_OBRIGATORIO);
         }
-        throw new InvalidArgumentException(GenericConsts::MSG_ERRO_LOGIN_SENHA_OBRIGATORIO);
     }
 
       /**
@@ -201,10 +209,7 @@ class handleUser
      */
     private function logout()
     {
-        $token = getallheaders()['Authorization'];
-        $token = $this->AuthorizationToken->getOneByToken($token);
-        $this->AuthorizationToken->destroyById($token['id']);
-        return ['destroyedToken' => $token];
+        Login::logout();
     }
 
     /**

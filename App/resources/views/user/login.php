@@ -12,28 +12,22 @@
 </head>
 <body>
     <div class="container">
-        <nav class="navbar navbar-expand-lg bg-body-tertiary d-flex justify-content-between">
-            <div class="mx-3">
-                <div class="collapse navbar-collapse">
-                    <a class="nav-link" href="<?= APP_URL.'/subscriber' ?>">Subscribers list</a>
-                </div>
-            </div>
-            <div class="mx-3">
-                <div class="collapse navbar-collapse">
-                    <a class="nav-link" href="<?= APP_URL.'/user/logout' ?>">Logout</a>
-                </div>
-            </div>
-
-        </nav>
         <div class="row">
             <div class="col-12">
-            <form action="subscriber/import" method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="inputFile" class="form-label">CSV File</label>
-                    <input type="file" class="form-control" name="inputFile" id="inputFile" aria-describedby="emailHelp" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Import</button>
-            </form>
+                <form method="POST" enctype="multipart/form-data">
+                    <fieldset>
+                        <legend>Login</legend>
+                        <div class="mb-3">
+                            <label for="inputEmail" class="form-label">Email:</label>
+                            <input type="email" id="inputEmail" name="inputEmail" class="form-control" required placeholder="Ex: test@test.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="inputPassword" class="form-label">Password:</label>
+                            <input type="password" id="inputPassword" name="inputPassword" required class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </fieldset>
+                </form>
             </div>
         </div>
     </div>

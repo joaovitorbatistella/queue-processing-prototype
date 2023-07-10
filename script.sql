@@ -19,3 +19,12 @@ CREATE TABLE subscribers(
 	`updated_at` DATETIME NOT NULL,
 	CONSTRAINT `pk_subscribers` PRIMARY KEY (`id`)
 );
+
+CREATE TABLE users(
+	`id` INTEGER AUTO_INCREMENT NOT NULL,
+	`email` VARCHAR(50) NOT NULL,
+	`password` VARCHAR(50) NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NOT NULL,
+	CONSTRAINT `pk_users` PRIMARY KEY (`id`)
+);

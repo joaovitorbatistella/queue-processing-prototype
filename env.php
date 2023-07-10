@@ -3,6 +3,7 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_erros', 1);
 error_reporting(E_ERROR);
+define(APP_URL, 'http://queue-processing');
 
 define(SECRET, 'EE978E4B133CCBCC29C3F8BF855B2');
 define(HOST, '127.0.0.1');
@@ -28,5 +29,5 @@ define(DIR_PROJECT, './');
 if (file_exists('autoload.php')) {
     include 'autoload.php';
 } else {
-    die('Falha ao carregar autoload!');
+    // die('Falha ao carregar autoload!');
 }

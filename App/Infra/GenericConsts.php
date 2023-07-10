@@ -7,59 +7,23 @@ abstract class GenericConsts
     /* REQUESTS */
     public const REQUEST_TYPES = ['GET', 'POST', 'DELETE', 'PUT'];
     public const GET_TYPE = [
-        'USERS',
-        'PRODUCT',
-        'CUSTOMER',
-        'PROVIDER',
-        'ATTENDANCE',
-        'GAME',
-        'REF',
-        'PRODUCTATTENDANCE',
-        'CITY',
-        'PURCHASE',
-        'PURCHASEPRODUCT'
+        'USER',
+        'SUBSCRIBER',
     ];
 
     public const POST_TYPE = [
-        'USERS',
-        'PRODUCT',
-        'CUSTOMER',
-        'PROVIDER',
-        'ATTENDANCE',
-        'GAME',
-        'REF',
-        'PRODUCTATTENDANCE',
-        'CITY',
-        'PURCHASE',
-        'PURCHASEPRODUCT'
+        'USER',
+        'SUBSCRIBER',
     ];
 
     public const DELETE_TYPE = [
-        'USERS',
-        'PRODUCT',
-        'CUSTOMER',
-        'PROVIDER',
-        'ATTENDANCE',
-        'GAME',
-        'REF',
-        'PRODUCTATTENDANCE',
-        'CITY',
-        'PURCHASE',
-        'PURCHASEPRODUCT'
+        'USER',
+        'SUBSCRIBER',
     ];
 
     public const PUT_TYPE = [
-        'USERS',
-        'PRODUCT',
-        'CUSTOMER',
-        'PROVIDER',
-        'ATTENDANCE',
-        'GAME',
-        'REF',
-        'PRODUCTATTENDANCE',
-        'CITY',
-        'PURCHASE',
-        'PURCHASEPRODUCT'
+        'USER',
+        'SUBSCRIBER',
     ];
 
 

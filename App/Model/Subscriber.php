@@ -27,7 +27,7 @@ class Subscriber
     public function getAllUsers($table)
     {
         if ($table) {
-            $sql = 'SELECT codigo, nome, nome_de_usuario FROM ' . $table;
+            $sql = 'SELECT * FROM ' . $table;
             $stmt = $this->getConn()->getDb()->query($sql);
             if($stmt) {
                 $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -72,21 +72,59 @@ class Subscriber
     
 
     /**
-     * @param $name
-     * @param $username
-     * @param $password
+     * @param $payload
      * @return int
      */
-    public function insertUser($name, $username, $password)
+    public function enQueue($payload)
     {
-        $sqlInsert = 'INSERT INTO ' . self::TABLE . ' (nome, nome_de_usuario, senha) VALUES (:name, :username, :password)';
-        $this->Conn->getDb()->beginTransaction();
-        $stmt = $this->Conn->getDb()->prepare($sqlInsert);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':password', $password);
-        $stmt->execute();
-        return $stmt->rowCount();
+        try {
+            $sqlInsert = 'INSERT INTO jobs (payload, created_at, updated_at) VALUES (:payload, :created_at, :updated_at)';
+            // $this->Conn->getDb()->beginTransaction();
+            $stmt = $this->Conn->getDb()->prepare($sqlInsert);
+            $stmt->bindParam(':payload', $payload);
+            $stmt->bindParam(':created_at', (new \DateTime())->format('Y-m-d H:i:s'));
+            $stmt->bindParam(':updated_at', (new \DateTime())->format('Y-m-d H:i:s'));
+            $stmt->execute();
+            return $stmt->rowCount();
+        } catch (\PDOException $e) {
+            // rollback the transaction
+            $this->Conn->getDb()->rollBack();
+
+            // show the error message
+            die($e->getMessage());
+        }
+        
+    }
+
+    /**
+     * @param $payload
+     * @return int
+     */
+    public function insertFromQueue($id, $payload)
+    {
+        try {
+            $sqlInsert = 'INSERT INTO '. self::TABLE .' (email, name, phone, created_at, updated_at) VALUES (:email, :name, :phone, :created_at, :updated_at)';
+            // $this->Conn->getDb()->beginTransaction();
+
+            $stmt = $this->Conn->getDb()->prepare($sqlInsert);
+            $stmt->bindParam(':email', $payload->email);
+            $stmt->bindParam(':name', $payload->name);
+            $stmt->bindParam(':phone', $payload->phone);
+            $stmt->bindParam(':created_at', (new \DateTime())->format('Y-m-d H:i:s'));
+            $stmt->bindParam(':updated_at', (new \DateTime())->format('Y-m-d H:i:s'));
+            $stmt->execute();
+            $deleted = $this->Conn->delete('jobs', $id);
+            var_dump($deleted);
+            return $deleted;
+        } catch (\PDOException $e) {
+            echo $e->getMessage();
+            // rollback the transaction
+            $this->Conn->getDb()->rollBack();
+
+            // show the error message
+            die($e->getMessage());
+        }
+        
     }
 
     /**
@@ -94,16 +132,16 @@ class Subscriber
      * @param $data
      * @return int
      */
-    public function updateUser($id, $data)
+    public function update($id, $data)
     {
         $id = (int)$id;
-        $sqlUpdate = 'UPDATE ' . self::TABLE . ' SET nome = :name, nome_de_usuario = :username, senha = :password WHERE codigo = :id';
+        $sqlUpdate = 'UPDATE ' . self::TABLE . ' SET name = :name, email = :email, phone = :phone WHERE id = :id';
         $this->Conn->getDb()->beginTransaction();
         $stmt = $this->Conn->getDb()->prepare($sqlUpdate);
         $stmt->bindParam(':id', $id);
         $stmt->bindValue(':name', $data['name']);
-        $stmt->bindValue(':username', $data['username']);
-        $stmt->bindValue(':password', $data['password']);
+        $stmt->bindValue(':email', $data['email']);
+        $stmt->bindValue(':phone', $data['phone']);
         $stmt->execute();
         return $stmt->rowCount();
     }

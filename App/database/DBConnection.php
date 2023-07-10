@@ -9,7 +9,7 @@ use Infra\GenericConsts;
 
 class DBConnection
 {
-    private object $db;
+    private $db;
 
     /**
      * Postgres constructor.
@@ -40,7 +40,7 @@ class DBConnection
      */
     public function delete($table, $id)
     {
-        $sqlDelete = 'DELETE FROM ' . $table . ' WHERE codigo = :id';
+        $sqlDelete = 'DELETE FROM ' . $table . ' WHERE id = :id';
         if ($table && $id) {
             $this->db->beginTransaction();
             $stmt = $this->db->prepare($sqlDelete);
@@ -49,6 +49,8 @@ class DBConnection
             if ($stmt->rowCount() > 0) {
                 $this->db->commit();
                 return GenericConsts::MSG_DELETADO_SUCESSO;
+            } else {
+                return;
             }
             $this->db->rollBack();
             throw new InvalidArgumentException(GenericConsts::MSG_ERRO_WITHOUT_RETURN);
@@ -85,7 +87,7 @@ class DBConnection
     public function getOneByKey($table, $id)
     {
         if ($table && $id) {
-            $sql = 'SELECT * FROM ' . $table . ' WHERE codigo = :id';
+            $sql = 'SELECT * FROM ' . $table . ' WHERE id = :id';
             $stmt = $this->db->prepare($sql);
             $stmt->bindParam(':id', $id);
             $stmt->execute();
@@ -105,5 +107,13 @@ class DBConnection
     public function getDb()
     {
         return $this->db;
+    }
+
+    /**
+     * 
+     */
+    public function closeConnection()
+    {
+        $this->db = null;
     }
 }

@@ -1,3 +1,8 @@
+<?php
+    use Session\Login;
+
+    Login::requiredLogin();
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -27,12 +32,20 @@
         </nav>
         <div class="row">
             <div class="col-12">
-            <form action="subscriber/import" method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <label for="inputFile" class="form-label">CSV File</label>
-                    <input type="file" class="form-control" name="inputFile" id="inputFile" aria-describedby="emailHelp" required>
+                    <label for="inputEmail" class="form-label">Email</label>
+                    <input value="<?= $editData['email'] ?>" type="email" class="form-control" name="inputEmail" id="inputEmail" aria-describedby="emailHelp" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Import</button>
+                <div class="mb-3">
+                    <label for="inputName" class="form-label">Name</label>
+                    <input value="<?= $editData['name'] ?>" type="text" class="form-control" name="inputName" id="inputName" aria-describedby="emailHelp" required>
+                </div>
+                <div class="mb-3">
+                    <label for="inputPhone" class="form-label">Phone</label>
+                    <input value="<?= $editData['phone'] ?>" type="text" class="form-control" name="inputPhone" id="inputPhone" aria-describedby="emailHelp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
             </form>
             </div>
         </div>

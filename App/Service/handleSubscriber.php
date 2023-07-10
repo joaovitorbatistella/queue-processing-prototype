@@ -6,12 +6,13 @@ use InvalidArgumentException;
 use Model\Subscriber;
 use Model\AuthorizationToken;
 use Infra\GenericConsts;
+use Session\Login;
 
-class handleSubscribers
+class handleSubscriber
 {
     public const TABLE = 'subscribers';
-    public const GET_RESOURCES = ['list', 'filterByEMail'];
-    public const POST_RESOURCES = ['store', 'import'];
+    public const GET_RESOURCES = ['list', 'filterByEMail', 'delete', 'edit'];
+    public const POST_RESOURCES = ['store', 'import', 'edit'];
     public const DELETE_RESOURCES = ['delete'];
     public const PUT_RESOURCES = ['update'];
 
@@ -24,54 +25,14 @@ class handleSubscribers
     // private object $AuthorizationToken;
 
     /**
-     * handleSubscribers constructor.
+     * handleSubscriber constructor.
      * @param array $data
      */
     public function __construct($data = [])
     {
         $this->data = $data;
         $this->Subscriber = new Subscriber();
-        // $this->AuthorizationToken = new AuthorizationToken();
-    }
 
-    /**
-     * @return mixed
-     */
-    public function validateLogin()
-    {
-        $return = null;
-        $resource = $this->data['resource'];
-        if (in_array($resource, self::LOGIN_RESOURCES, true)) {
-            $return = $this->$resource();
-        } else {
-            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_RECURSO_INEXISTENTE);
-        }
-
-        if ($return === null) {
-            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_GENERICO);
-        }
-
-        return $return;
-    }
-
-     /**
-     * @return mixed
-     */
-    public function validateLogout()
-    {
-        $return = null;
-        $resource = $this->data['resource'];
-        if (in_array($resource, self::LOGOUT_RESOURCES, true)) {
-            $return = $this->$resource();
-        } else {
-            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_RECURSO_INEXISTENTE);
-        }
-
-        if ($return === null) {
-            throw new InvalidArgumentException(GenericConsts::MSG_ERRO_GENERICO);
-        }
-
-        return $return;
     }
     
 
@@ -85,6 +46,10 @@ class handleSubscribers
         if (in_array($resource, self::GET_RESOURCES, true)) {
             if( $this->data['params'] != null){
                 $return = $this->data['id'] > 0 ? $this->getOneByKey() : $this->filterByName( $this->data['params']);
+            } else if ($resource === 'delete') {
+                $return = $this->$resource();
+            } else if ($resource === 'edit') {
+                $return = $this->$resource();
             } else {
                 $return = $this->data['id'] > 0 ? $this->getOneByKey() : $this->$resource();
             }
@@ -239,22 +204,48 @@ class handleSubscribers
     /**
      * @return array
      */
-    private function store()
+    private function import()
     {
-        [$name, $username, $password] = [$this->bodyDataRequests['name'], $this->bodyDataRequests['username'], $this->bodyDataRequests['password']];
+        $assocHeadersArray=[];
+        $assocDataArray=[];
+        $newData=[];
+        $inputFile = $this->bodyDataRequests['inputFile'];
 
-        if ($name && $username && $password) {
-            if ($this->Subscriber->getRegisterByLogin($username) > 0) {
-                throw new InvalidArgumentException(GenericConsts::MSG_ERRO_LOGIN_EXISTENTE);
+        if ($inputFile) {
+            $handle = fopen($inputFile['tmp_name'], "r");
+            $row = 1;
+            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                if($row === 1) {
+                    foreach ($data as $value) {
+                        $assocHeadersArray[] = $value;
+                    }
+                    $row++;
+                    continue;
+                }
+                foreach ($data as $key => $value) {
+                    if(in_array($assocHeadersArray[$key], ['email','name','phone'])) {
+                        $assocDataArray[$assocHeadersArray[$key]] = $value;
+                    }
+                }
+                $row++;
+                $newData[] = $assocDataArray;
+            }
+            $assocDataArray=null;
+            fclose($handle);
+
+            foreach ($newData as $key => $value) {
+                $this->Subscriber->enQueue(base64_encode(json_encode($value)));
             }
 
-            if ($this->Subscriber->insertUser($name, $username, $password) > 0) {
-                $insertedId = $this->Subscriber->getConn()->getDb()->lastInsertId();
-                $this->Subscriber->getConn()->getDb()->commit();
-                return ['insertedId' => $insertedId];
-            }
+            // exit;
+            // if ($this->Subscriber->insertUser($name, $username, $password) > 0) {
+            //     $insertedId = $this->Subscriber->getConn()->getDb()->lastInsertId();
+            //     $this->Subscriber->getConn()->getDb()->commit();
+            //     return ['insertedId' => $insertedId];
+            // }
 
-            $this->Subscriber->getConn()->getDb()->rollBack();
+            // $this->Subscriber->getConn()->getDb()->rollBack();
+            header('location: '.APP_URL.'/subscriber');
 
             throw new InvalidArgumentException(GenericConsts::MSG_ERRO_GENERICO);
         }
@@ -266,20 +257,43 @@ class handleSubscribers
      */
     private function delete()
     {
-        return $this->Subscriber->getConn()->delete(self::TABLE, $this->data['id']);
+        if(!Login::isLogged()){
+            header('location: '.APP_URL.'/user/login');
+            exit;
+        }
+        $this->Subscriber->getConn()->delete(self::TABLE, $this->data['id']);
+
+        header('location: '.APP_URL.'/subscriber');
     }
 
-    /**
+        /**
      * @return string
      */
-    private function update()
+    private function edit()
     {
-        if ($this->Subscriber->updateUser($this->data['id'], $this->bodyDataRequests) > 0) {
-            $this->Subscriber->getConn()->getDb()->commit();
-            return GenericConsts::MSG_ATUALIZADO_SUCESSO;
+        if(!Login::isLogged()){
+            header('location: '.APP_URL.'/user/login');
+            exit;
         }
-        $this->Subscriber->getConn()->getDb()->rollBack();
-        throw new InvalidArgumentException(GenericConsts::MSG_ERRO_NAO_AFETADO);
+        if($this->data['method'] === 'GET') {
+            $editData = $this->getOneByKey();
+            include dirname(__DIR__).'/resources/views/subscriber/edit.php';
+            exit;
+        } else {
+            if ($this->Subscriber->update($this->data['id'], [
+                "email" => $this->bodyDataRequests['inputEmail'],
+                "name"  => $this->bodyDataRequests['inputName'],
+                "phone" => $this->bodyDataRequests['inputPhone']
+            ]) > 0) {
+                $this->Subscriber->getConn()->getDb()->commit();
+                header('location: '.APP_URL.'/subscriber');
+                exit;
+            } else {
+                $this->Subscriber->getConn()->getDb()->rollBack();
+                header('location: '.APP_URL.'/subscriber/edit/'.$this->data['id']);
+                exit;
+            }
+        }
     }
 
 }

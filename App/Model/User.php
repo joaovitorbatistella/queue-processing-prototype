@@ -6,6 +6,7 @@ use database\DBConnection;
 use PDO;
 use InvalidArgumentException;
 use Infra\GenericConsts;
+use Session\Login;
 
 class User
 {
@@ -27,11 +28,16 @@ class User
      */
     public function handleLogin($username, $password)
     {
-        $sql = 'SELECT * FROM ' . self::TABLE . ' WHERE nome_de_usuario = :username AND senha = :password';
+        $sql = 'SELECT * FROM ' . self::TABLE . ' WHERE email = :username AND password = :password';
         $stmt = $this->Conn->getDb()->prepare($sql);
         $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':password', $password);
+        $stmt->bindParam(':password', md5($password));
         $stmt->execute();
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if($row) {
+            Login::login($row);
+        }
         return $stmt->rowCount();
     }
 

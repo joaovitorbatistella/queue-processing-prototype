@@ -3,9 +3,8 @@
 namespace Validator;
 
 use InvalidArgumentException;
-use Model\AuthorizationToken;
 use Service\handleUser;
-use Service\handleSubscribers;
+use Service\handleSubscriber;
 use Infra\GenericConsts;
 use Infra\Json;
 
@@ -13,23 +12,13 @@ class RequestValidator
 {
     private array $request;
     private array $requestData;
-    private object $AuthorizationToken;
 
     const DELETE = 'DELETE';
     const POST = 'POST';
     const GET = 'GET';
 
-    const REF = 'REF';
-    const SUBSCRIBERS = 'SUBSCRIBERS';
-    const GAME = 'GAME';
-    const USERS = 'USERS';
-    const PRODUCT = 'PRODUCT';
-    const CUSTOMER = 'CUSTOMER';
-    const PROVIDER = 'PROVIDER';
-    const PURCHASE = 'PURCHASE';
-    const ATTENDANCE = 'ATTENDANCE';
-    const PURCHASEPRODUCT = 'PURCHASEPRODUCT';
-    const PRODUCTATTENDANCE = 'PRODUCTATTENDANCE';
+    const SUBSCRIBER = 'SUBSCRIBER';
+    const USER = 'USER';
 
 
     /**
@@ -38,7 +27,6 @@ class RequestValidator
      */
     public function __construct($request = [])
     {
-        $this->AuthorizationToken = new AuthorizationToken();
         $this->request = $request;
     }
 
@@ -60,33 +48,33 @@ class RequestValidator
      */
     private function directRequest()
     {
-
         if(empty($this->request['route']) && $this->request['resource'] === NULL && $this->request['method'] === 'GET') {
             include dirname(__DIR__).'/resources/views/index.php';
+            exit;
+        } else if($this->request['route'] === 'SUBSCRIBER' && in_array($this->request['resource'], ['index', null]) && $this->request['method'] === 'GET') {           
+            include dirname(__DIR__).'/resources/views/subscriber/list.php';
+            exit;
         } else {
             if ($this->request['route'] === 'SUBSCRIBER' && $this->request['resource'] === 'import' && $this->request['method'] === 'POST'){
+                $this->requestData = array_merge($_POST, $_FILES);
                 $method = $this->request['method'];
-            } 
-            // else if ($this->request['route'] === 'USERS' && $this->request['resource'] === 'logout' && $this->request['method'] === 'GET'){
-            //     $method = $this->request['method'].'logout';
-            //     $this->AuthorizationToken->validToken(getallheaders()['Authorization']);
-            // } else if ($this->request['route'] === 'GAME' && $this->request['resource'] === 'delete' && $this->request['method'] === 'DELETE'){
-            //     $this->requestData = Json::handleBodyRequest();
-            //     $method = $this->request['method'];
-            // } else if ($this->request['route'] === 'REF' && $this->request['resource'] === 'list' && $this->request['method'] === 'GET'){
-            //     $method = $this->request['method'];
-            // }else if ($this->request['route'] === 'PRODUCTATTENDANCE' && $this->request['resource'] === 'delete' && $this->request['method'] === 'DELETE'){
-            //     $this->requestData = Json::handleBodyRequest();
-            //     $method = $this->request['method'];
-            // }else {
-                if ($this->request['method'] !== self::GET && $this->request['method'] !== self::DELETE) {
+            } else if ($this->request['route'] === 'SUBSCRIBER' && $this->request['resource'] === 'edit' && $this->request['method'] === 'POST'){
+                $this->requestData = $_POST;
+                $method = $this->request['method'];
+            } else if ($this->request['route'] === 'USER' && $this->request['resource'] === 'login' && $this->request['method'] === 'POST'){
+                $this->requestData = $_POST;
+                $method = $this->request['method'];
+            } else {
+                if ($this->request['method'] !== self::GET && $this->request['method'] !== self::DELETE && $this->request['resource'] !== 'import') {
                     $this->requestData = Json::handleBodyRequest();
                     $method = $this->request['method'];
                 } else {
                     $method = $this->request['method'];
                 }
-                // $this->AuthorizationToken->validToken(getallheaders()['Authorization']);
-            // }
+            }
+            
+            
+            
             return $this->$method();
         }
     }
@@ -100,13 +88,13 @@ class RequestValidator
         $return = utf8_encode(GenericConsts::MSG_ERROR_ROUTER_TYPE);
         if (in_array($this->request['route'], GenericConsts::GET_TYPE, true)) {
             switch ($this->request['route']) {
-                case self::USERS:
+                case self::USER:
                     $handleUser = new handleUser($this->request);
                     $return = $handleUser->validateGet();
                     break;
-                case self::SUBSCRIBERS:
-                    $handleSubscribers = new handleSubscribers($this->request);
-                    $return = $handleSubscribers->validateGet();
+                case self::SUBSCRIBER:
+                    $handleSubscriber = new handleSubscriber($this->request);
+                    $return = $handleSubscriber->validateGet();
                     break;
                 default:
                     throw new InvalidArgumentException(GenericConsts::MSG_ERRO_RECURSO_INEXISTENTE);
@@ -124,15 +112,15 @@ class RequestValidator
         $return = null;
         if (in_array($this->request['route'], GenericConsts::POST_TYPE, true)) {
             switch ($this->request['route']) {
-                case self::USERS:
+                case self::USER:
                     $handleUser = new handleUser($this->request);
                     $handleUser->setBodyDataRequests($this->requestData);
                     $return = $handleUser->validatePost();
                     break;
-                case self::SUBSCRIBERS:
-                    $handleSubscribers = new handleSubscribers($this->request);
-                    $handleSubscribers->setBodyDataRequests($this->requestData);
-                    $return = $handleSubscribers->validatePost();
+                case self::SUBSCRIBER:
+                    $handleSubscriber = new handleSubscriber($this->request);
+                    $handleSubscriber->setBodyDataRequests($this->requestData);
+                    $return = $handleSubscriber->validatePost();
                     break;
                 default:
                     throw new InvalidArgumentException(GenericConsts::MSG_ERROR_ROUTER_TYPE);
@@ -151,7 +139,7 @@ class RequestValidator
         $return = null;
         if (in_array($this->request['route'], GenericConsts::PUT_TYPE, true)) {
             switch ($this->request['route']) {
-                case self::USERS:
+                case self::USER:
                     $handleUser = new handleUser($this->request);
                     $handleUser->setBodyDataRequests($this->requestData);
                     $return = $handleUser->validatePut();
@@ -213,7 +201,7 @@ class RequestValidator
         $return = utf8_encode(GenericConsts::MSG_ERROR_ROUTER_TYPE);
         if (in_array($this->request['route'], GenericConsts::DELETE_TYPE, true)) {
             switch ($this->request['route']) {
-                case self::USERS:
+                case self::USER:
                     $handleUser = new handleUser($this->request);
                     $return = $handleUser->validateDelete();
                     break;
@@ -263,7 +251,7 @@ class RequestValidator
         $return = null;
         if (in_array($this->request['route'], GenericConsts::POST_TYPE, true)) {
             switch ($this->request['route']) {
-                case self::USERS:
+                case self::USER:
                     $handleUser = new handleUser($this->request);
                     $handleUser->setBodyDataRequests($this->requestData);
                     $return = $handleUser->validatelogin();
@@ -285,7 +273,7 @@ class RequestValidator
         $return = utf8_encode(GenericConsts::MSG_ERROR_ROUTER_TYPE);
         if (in_array($this->request['route'], GenericConsts::GET_TYPE, true)) {
             switch ($this->request['route']) {
-                case self::USERS:
+                case self::USER:
                     $handleUser = new handleUser($this->request);
                     $return = $handleUser->validateLogout();
                     break;

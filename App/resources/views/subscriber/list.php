@@ -1,3 +1,34 @@
+<?php
+    $data = file_get_contents(APP_URL.'/subscriber/list');
+    
+    if(!empty($data)) {
+        $data = json_decode($data);
+        if($data->type === 'success') {
+            $results = '';
+            foreach($data->response as $subscriber){
+                $results .=  '<tr>
+                                    <td>'.$subscriber->id.'</td>
+                                    <td>'.$subscriber->email.'</td>
+                                    <td>'.$subscriber->name.'</td>
+                                    <td>'.$subscriber->phone.'</td>
+                                    <td class="text-primary">-</td>
+                                    <td>
+                                      <a href="'.APP_URL.'/subscriber/edit/'.$subscriber->id.'">
+                                        <button type="button" class="btn btn-primary">Editar</button>
+                                      </a>
+                                      <a href="'.APP_URL.'/subscriber/delete/'.$subscriber->id.'">
+                                        <button type="button" class="btn btn-danger">Excluir</button>
+                                      </a>
+                                    </td>
+                                 </tr>';
+            } 
+
+            $results = !empty($data->response) ? $results : '<tr><td colspan="6" class="text-center">Não há projetos cadastrados!</td></tr>';
+        }
+    }
+?>
+
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -27,13 +58,19 @@
         </nav>
         <div class="row">
             <div class="col-12">
-            <form action="subscriber/import" method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="inputFile" class="form-label">CSV File</label>
-                    <input type="file" class="form-control" name="inputFile" id="inputFile" aria-describedby="emailHelp" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Import</button>
-            </form>
+            <table class="table">
+                <thead>
+                    <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Phone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?=$results?>
+                </tbody>
+                </table>
             </div>
         </div>
     </div>
