@@ -12,6 +12,7 @@
 ```sh
  * * * * * /bin/sh /var/queue_processing_prototype/queue_script.sh  >> /tmp/arq1
 ```
+ * To edit crontab, run: `crontab -e -u $USER`
 
 ### Should look like this:
 ```sh
