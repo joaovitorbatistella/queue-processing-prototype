@@ -50,6 +50,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # * * * * * echo "ony for test" >> /tmp/arq1
 ```
 
+Video pt1: https://loom.com/share/b8370e55ef2343808d8395a858359c18
+Video pt2: https://loom.com/share/25c97b968d3149bfaf6e21fce5f19562
 
 ### By: João Vítor Batistella
 ## Up to date
